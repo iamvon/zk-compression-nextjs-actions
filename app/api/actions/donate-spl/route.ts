@@ -37,18 +37,22 @@ export const GET = async (req: Request) => {
       links: {
         actions: [
           {
+            type: "transaction",
             label: 'Send 10 USDC', // button text
             href: `${baseHref}&amount=${'10'}`,
           },
           {
+            type: "transaction",
             label: 'Send 50 USDC', // button text
             href: `${baseHref}&amount=${'50'}`,
           },
           {
+            type: "transaction",
             label: 'Send 100 USDC', // button text
             href: `${baseHref}&amount=${'100'}`,
           },
           {
+            type: "transaction",
             label: 'Send USDC', // button text
             href: `${baseHref}&amount={amount}`, // this href will have a text input
             parameters: [
@@ -163,6 +167,7 @@ export const POST = async (req: Request) => {
 
     const payload: ActionPostResponse = await createPostResponse({
       fields: {
+        type: "transaction",
         transaction,
         message: `Donated ${amount} USDC to ${toPubkey.toBase58()}`,
       },
