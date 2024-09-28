@@ -31,7 +31,7 @@ import {
             {
               type: 'transaction',
               label: 'Compress 0.001 SOL', // button text
-              href: `${baseHref}&amount=${'1'}`,
+              href: `${baseHref}&amount=${'0.001'}`,
             },
             {
               type: 'transaction',
