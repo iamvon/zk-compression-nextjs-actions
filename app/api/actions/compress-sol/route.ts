@@ -30,18 +30,18 @@ import {
           actions: [
             {
               type: 'transaction',
-              label: 'Compress 0.001 SOL', // button text
-              href: `${baseHref}&amount=${'0.001'}`,
+              label: 'Compress 0.0001 SOL', // button text
+              href: `${baseHref}&amount=${'0.0001'}`,
             },
             {
               type: 'transaction',
-              label: 'Compress 0.002 SOL', // button text
-              href: `${baseHref}&amount=${'0.002'}`,
+              label: 'Compress 0.0002 SOL', // button text
+              href: `${baseHref}&amount=${'0.0002'}`,
             },
             {
               type: 'transaction',
-              label: 'Compress 0.005 SOL', // button text
-              href: `${baseHref}&amount=${'0.005'}`,
+              label: 'Compress 0.0005 SOL', // button text
+              href: `${baseHref}&amount=${'0.0005'}`,
             },
             {
               type: 'transaction',
