@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@solana/actions": "^1.6.4",
+    "@solana/spl-token": "^0.4.8",
     "@tabler/icons-react": "^3.19.0",
     "next": "14.2.13",
     "react": "^18",
