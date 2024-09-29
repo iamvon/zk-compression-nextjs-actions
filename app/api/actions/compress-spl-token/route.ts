@@ -19,7 +19,7 @@ export const GET = async (req: Request) => {
         const { toPubkey } = validatedQueryParams(requestUrl);
 
         const baseHref = new URL(
-            `/api/actions/compress-spl?to=${toPubkey.toBase58()}`,
+            `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
             requestUrl.origin
         ).toString();
 
