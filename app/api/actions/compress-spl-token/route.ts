@@ -6,13 +6,14 @@ import {
     createActionHeaders,
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
-import { buildCompressSplTokenTx } from '../../../services/compression/compressSplToken';
+import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
+import { getCompressedTokens } from '@/app/services/compression/getCompressedTokens';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 const headers = createActionHeaders();
 
-// GET handler to provide the actions for compressing Spl Token
+// GET handler to provide the actions for compressing and decompressing Spl Token
 export const GET = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
@@ -24,38 +25,21 @@ export const GET = async (req: Request) => {
         ).toString();
 
         const payload: ActionGetResponse = {
-            title: 'Compress USDC',
+            title: 'Compress or Decompress USDC',
             icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-            description: 'Compress USDC to save your rent fees.',
-            label: 'Compress USDC',
+            description: 'Compress or Decompress USDC to save or retrieve your tokens.',
+            label: 'Compress or Decompress USDC',
             links: {
                 actions: [
                     {
                         type: 'transaction',
-                        label: 'Compress 0.0001 USDC', // button text
-                        href: `${baseHref}&amount=${'0.0001'}`,
+                        label: 'Compress USDC', // Option to compress USDC
+                        href: `${baseHref}&action=compress`,
                     },
                     {
                         type: 'transaction',
-                        label: 'Compress 0.0002 USDC', // button text
-                        href: `${baseHref}&amount=${'0.0002'}`,
-                    },
-                    {
-                        type: 'transaction',
-                        label: 'Compress 0.0005 USDC', // button text
-                        href: `${baseHref}&amount=${'0.0005'}`,
-                    },
-                    {
-                        type: 'transaction',
-                        label: 'Compress Custom Amount', // button text
-                        href: `${baseHref}&amount={amount}`, // this href will have a text input
-                        parameters: [
-                            {
-                                name: 'amount', // parameter name in the `href` above
-                                label: 'Enter the amount of USDC to compress', // placeholder of the text input
-                                required: true,
-                            },
-                        ],
+                        label: 'Decompress USDC', // Option to decompress USDC
+                        href: `${baseHref}&action=decompress`,
                     },
                 ],
             },
@@ -74,15 +58,15 @@ export const GET = async (req: Request) => {
     }
 };
 
-// POST handler to build the transaction for compressing Spl Token
+// POST handler to handle compressing and decompressing Spl Token
 export const POST = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
-        const { amount, toPubkey } = validatedQueryParams(requestUrl);
+        const { amount, toPubkey, action } = validatedQueryParams(requestUrl); // Get the action (compress or decompress)
 
         const body: ActionPostRequest = await req.json();
 
-        // Validate the client provided input
+        // Validate the client-provided input
         let account: PublicKey;
         try {
             account = new PublicKey(body.account);
@@ -93,20 +77,48 @@ export const POST = async (req: Request) => {
             });
         }
 
-        // Build the Compress USDC transaction
-        const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
+        if (action === 'compress') {
+            // Build the Compress USDC transaction
+            const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
 
-        const payload: ActionPostResponse = await createPostResponse({
-            fields: {
-                type: 'transaction',
-                transaction,
-                message: `Compressed ${amount} USDC for ${toPubkey.toBase58()}`,
-            },
-        });
+            const payload: ActionPostResponse = await createPostResponse({
+                fields: {
+                    type: 'transaction',
+                    transaction,
+                    message: `Compressed ${amount} USDC for ${toPubkey.toBase58()}`,
+                },
+            });
 
-        return Response.json(payload, {
-            headers,
-        });
+            return Response.json(payload, {
+                headers,
+            });
+        } else if (action === 'decompress') {
+            // Fetch and display compressed tokens
+            const compressedTokens = await getCompressedTokens(account.toBase58());
+
+            const payload: ActionGetResponse = {
+                title: 'List of Compressed USDC Tokens',
+                icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
+                description: 'Select a compressed token to decompress.',
+                label: 'Compressed USDC Tokens',
+                links: {
+                    actions: compressedTokens.items?.map((token) => ({
+                        type: 'transaction',
+                        label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`, // Display each compressed token
+                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}`,
+                    })),
+                },
+            };
+
+            return Response.json(payload, {
+                headers,
+            });
+        } else {
+            return new Response('Invalid action specified', {
+                status: 400,
+                headers,
+            });
+        }
     } catch (err) {
         console.error(err);
         const message = typeof err === 'string' ? err : 'An unknown error occurred';
@@ -126,6 +138,7 @@ export const OPTIONS = async (req: Request) => {
 function validatedQueryParams(requestUrl: URL) {
     let toPubkey: PublicKey = new PublicKey("3rh9uw7wnUAJNFijUVPuxLjyEaTd984mZeWFKYVa6LgY"); // Default wallet address
     let amount: number = 0.001; // Default amount
+    let action: string = 'compress'; // Default action is compress
 
     try {
         if (requestUrl.searchParams.get('to')) {
@@ -144,8 +157,17 @@ function validatedQueryParams(requestUrl: URL) {
         throw 'Invalid input query parameter: amount';
     }
 
+    try {
+        if (requestUrl.searchParams.get('action')) {
+            action = requestUrl.searchParams.get('action')!;
+        }
+    } catch (err) {
+        throw 'Invalid input query parameter: action';
+    }
+
     return {
         amount,
         toPubkey,
+        action,
     };
 }
