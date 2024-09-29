@@ -98,8 +98,7 @@ export const POST = async (req: Request) => {
             // Return the response including the transaction and a message
             const payload = await createPostResponse({
                 fields: {
-                    // @ts-ignore
-                    type: 'action',
+                    type: 'transaction',
                     transaction,
                     message: `Compressed ${amount} USDC for ${toPubkey.toBase58()}`,
                     links: {
