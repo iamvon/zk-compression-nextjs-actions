@@ -5,7 +5,8 @@ import {
 } from "@lightprotocol/stateless.js";
 import { PublicKey } from "@solana/web3.js";
 
-const connection: Rpc = createRpc(clusterApiUrl('mainnet-beta'));
+const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
+const connection: Rpc = createRpc(rpcUrl);
 
 export const getCompressedTokens = async (owner: string) => {
     try {
