@@ -1,9 +1,8 @@
 import {
-    ActionPostResponse,
     createPostResponse,
-    ActionGetResponse,
     ActionPostRequest,
     createActionHeaders,
+    InlineNextActionLink
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
@@ -11,52 +10,10 @@ import { getCompressedTokens } from '@/app/services/compression/getCompressedTok
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-const headers = createActionHeaders();
-
-// GET handler to provide the actions for compressing and decompressing Spl Token
-export const GET = async (req: Request) => {
-    try {
-        const requestUrl = new URL(req.url);
-        const { toPubkey } = validatedQueryParams(requestUrl);
-
-        const baseHref = new URL(
-            `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
-            requestUrl.origin
-        ).toString();
-
-        const payload: ActionGetResponse = {
-            title: 'Compress or Decompress USDC',
-            icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-            description: 'Compress or Decompress USDC to save or retrieve your tokens.',
-            label: 'Compress or Decompress USDC',
-            links: {
-                actions: [
-                    {
-                        type: 'transaction',
-                        label: 'Compress USDC', // Option to compress USDC
-                        href: `${baseHref}&action=compress`,
-                    },
-                    {
-                        type: 'transaction',
-                        label: 'Decompress USDC', // Option to decompress USDC
-                        href: `${baseHref}&action=decompress`,
-                    },
-                ],
-            },
-        };
-
-        return Response.json(payload, {
-            headers,
-        });
-    } catch (err) {
-        console.error(err);
-        const message = typeof err === 'string' ? err : 'An unknown error occurred';
-        return new Response(message, {
-            status: 400,
-            headers,
-        });
-    }
-};
+const headers = createActionHeaders({
+  chainId: 'mainnet',
+  actionVersion: '2.2.1',
+});
 
 // POST handler to handle compressing and decompressing Spl Token
 export const POST = async (req: Request) => {
@@ -81,11 +38,26 @@ export const POST = async (req: Request) => {
             // Build the Compress USDC transaction
             const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
 
-            const payload: ActionPostResponse = await createPostResponse({
+            // Return the response including the transaction and a message
+            const payload = await createPostResponse({
                 fields: {
-                    type: 'transaction',
+                    // @ts-ignore
+                    type: 'action',
                     transaction,
                     message: `Compressed ${amount} USDC for ${toPubkey.toBase58()}`,
+                    links: {
+                        next: {
+                            type: 'inline', // Inline action chaining
+                            action: {
+                                type: 'action',
+                                icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
+                                label: 'Thank You!',
+                                title: 'Compress USDC',
+                                disabled: true,
+                                description: 'USDC has been successfully compressed.',
+                            },
+                        } as InlineNextActionLink,
+                    },
                 },
             });
 
@@ -96,19 +68,32 @@ export const POST = async (req: Request) => {
             // Fetch and display compressed tokens
             const compressedTokens = await getCompressedTokens(account.toBase58());
 
-            const payload: ActionGetResponse = {
-                title: 'List of Compressed USDC Tokens',
-                icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-                description: 'Select a compressed token to decompress.',
-                label: 'Compressed USDC Tokens',
-                links: {
-                    actions: compressedTokens.items?.map((token) => ({
-                        type: 'transaction',
-                        label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`, // Display each compressed token
-                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}`,
-                    })),
+            // Prepare the next action to decompress the token
+            const payload = await createPostResponse({
+                fields: {
+                    // @ts-ignore
+                    type: 'action',
+                    message: 'Select a compressed token to decompress',
+                    links: {
+                        next: {
+                            type: 'inline', // Inline action chaining
+                            action: {
+                                title: 'Select a token to decompress',
+                                description: 'Choose from the list below to decompress your USDC',
+                                icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
+                                label: 'Compressed USDC Tokens',
+                                links: {
+                                    actions: compressedTokens.items?.map((token) => ({
+                                        type: 'transaction', // Linked action type for decompression
+                                        label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`,
+                                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}`,
+                                    })),
+                                },
+                            },
+                        } as InlineNextActionLink,
+                    },
                 },
-            };
+            });
 
             return Response.json(payload, {
                 headers,
@@ -127,11 +112,6 @@ export const POST = async (req: Request) => {
             headers,
         });
     }
-};
-
-// Handle OPTIONS for CORS
-export const OPTIONS = async (req: Request) => {
-    return new Response(null, { headers });
 };
 
 // Helper function to validate query parameters
@@ -171,3 +151,8 @@ function validatedQueryParams(requestUrl: URL) {
         action,
     };
 }
+
+// Handle OPTIONS for CORS
+export const OPTIONS = async (req: Request) => {
+    return new Response(null, { headers });
+};
