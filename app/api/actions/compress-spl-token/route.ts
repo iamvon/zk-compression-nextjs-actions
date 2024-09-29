@@ -92,7 +92,7 @@ export const POST = async (req: Request) => {
         if (action === 'compress') {
             // Build the Compress USDC transaction
             const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
-
+            console.log("compress transaction:", JSON.stringify(transaction))
             // Return the response including the transaction and a message
             const payload = await createPostResponse({
                 fields: {
@@ -122,7 +122,7 @@ export const POST = async (req: Request) => {
         } else if (action === 'decompress') {
             // Fetch and display compressed tokens
             const compressedTokens = await getCompressedTokens(account.toBase58());
-
+            console.log("compressedTokens:", JSON.stringify(compressedTokens))
             // Prepare the next action to decompress the token
             const payload = await createPostResponse({
                 fields: {
