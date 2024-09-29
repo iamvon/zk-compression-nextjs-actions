@@ -89,6 +89,8 @@ export const POST = async (req: Request) => {
             });
         }
 
+        console.log(`amount, toPubkey, action: ${amount}, ${toPubkey}, ${action}`)
+
         if (action === 'compress') {
             // Build the Compress USDC transaction
             const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
