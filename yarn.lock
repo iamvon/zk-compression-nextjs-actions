@@ -100,6 +100,17 @@
     wrap-ansi "^8.1.0"
     wrap-ansi-cjs "npm:wrap-ansi@^7.0.0"
 
+"@lightprotocol/compressed-token@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@lightprotocol/compressed-token/-/compressed-token-0.13.0.tgz#8d4c2f1e06a7013de47bd65e973b7653aa5d3ee1"
+  integrity sha512-YnNlFbWSO+sX4AP5HLh1xT0kz88xOSNo2LuyyNLuCLto6PYdPl1RQO2PNBt+LR5vd7NflSETARVdrBMeTu9ZqQ==
+  dependencies:
+    "@coral-xyz/anchor" "0.29.0"
+    "@solana/spl-token" "^0.4.8"
+    "@solana/web3.js" "^1.95.3"
+    buffer "^6.0.3"
+    tweetnacl "^1.0.3"
+
 "@lightprotocol/stateless.js@^0.13.0":
   version "0.13.0"
   resolved "https://registry.yarnpkg.com/@lightprotocol/stateless.js/-/stateless.js-0.13.0.tgz#7a25509587e623e4ff36cb2ce413155514a90eed"
