@@ -2,7 +2,8 @@ import {
     createPostResponse,
     ActionPostRequest,
     createActionHeaders,
-    InlineNextActionLink
+    InlineNextActionLink,
+    ActionGetResponse
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
@@ -11,9 +12,63 @@ import { getCompressedTokens } from '@/app/services/compression/getCompressedTok
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 const headers = createActionHeaders({
-  chainId: 'mainnet',
-  actionVersion: '2.2.1',
+    chainId: 'mainnet',
+    actionVersion: '2.2.1',
 });
+
+// GET handler to provide the actions for compressing and decompressing Spl Token
+export const GET = async (req: Request) => {
+    try {
+        const requestUrl = new URL(req.url);
+        const { toPubkey } = validatedQueryParams(requestUrl);
+
+        const baseHref = new URL(
+            `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+            requestUrl.origin,
+        ).toString();
+
+        const payload: ActionGetResponse = {
+            type: 'action',
+            title: 'Compress or Decompress USDC',
+            icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
+            description: 'Compress or Decompress USDC to save or retrieve your tokens.',
+            label: 'Compress or Decompress USDC',
+            links: {
+                actions: [
+                    {
+                        type: 'transaction',
+                        label: 'Compress USDC', // button text
+                        href: `${baseHref}&action=compress&amount={amount}`, // this href will have a text input
+                        parameters: [
+                            {
+                                type: 'select',
+                                name: 'amount', // parameter name in the `href` above
+                                label: 'Amount of USDC to compress', // placeholder of the text input
+                                required: true,
+                                options: [
+                                    { label: '0.0001', value: '0.0001' },
+                                    { label: '0.001', value: '0.001' },
+                                    { label: '0.1', value: '0.1' },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        type: 'post',
+                        label: 'Decompress USDC', // button text
+                        href: `${baseHref}&action=decompress`,
+                    },
+                ],
+            },
+        };
+
+        return Response.json(payload, { headers });
+    } catch (err) {
+        console.error(err);
+        const message = typeof err === 'string' ? err : 'An unknown error occurred';
+        return new Response(message, { status: 400, headers });
+    }
+};
 
 // POST handler to handle compressing and decompressing Spl Token
 export const POST = async (req: Request) => {
