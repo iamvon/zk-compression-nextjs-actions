@@ -36,7 +36,7 @@ export const GET = async (req: Request) => {
             links: {
                 actions: [
                     {
-                        type: 'post',
+                        type: 'transaction',
                         label: 'Compress USDC', // button text
                         href: `${baseHref}&action=compress&amount={amount}`, // this href will have a text input
                         parameters: [
