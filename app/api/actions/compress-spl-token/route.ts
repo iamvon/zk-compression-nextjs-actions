@@ -129,11 +129,28 @@ export const POST = async (req: Request) => {
             // Fetch and display compressed tokens
             const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
 
+            // Filter to find compressed USDC token accounts
+            const usdcTokenAccounts = compressedTokenAccounts.items.filter(token =>
+                token.parsed.mint.toBase58() === SOLANA_MAINNET_USDC_PUBKEY
+            );
+
+            console.log("Filtered USDC Token Accounts:", usdcTokenAccounts);
+
+            // Check if there are any USDC token accounts
+            if (usdcTokenAccounts.length === 0) {
+                return new Response('No USDC compressed token accounts found.', { status: 404, headers });
+            }
+
             // Select accounts to transfer from based on the transfer amount
             const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
-                compressedTokenAccounts.items,
+                usdcTokenAccounts,
                 normalizedAmount,
             );
+
+            // Check if we found any accounts suitable for the transfer
+            if (!inputAccounts || inputAccounts.length === 0) {
+                return new Response('No suitable accounts found for the specified amount.', { status: 404, headers });
+            }
 
             // Build the Decompress USDC transaction
             const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, inputAccounts, normalizedAmount);
