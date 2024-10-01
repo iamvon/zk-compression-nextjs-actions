@@ -9,6 +9,7 @@ import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
 import { getCompressedTokens } from '@/app/services/compression/getCompressedTokens';
 import { buildDecompressSplTokenTx } from '@/app/services/compression/decompressSplToken';
+import { selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOLANA_MAINNET_USDC_DECIMALS = 6;
@@ -92,7 +93,7 @@ export const POST = async (req: Request) => {
         }
 
         console.log(`amount, toPubkey, action: ${amount}, ${toPubkey}, ${action}`)
-        
+
         const normalizedAmount = Math.round(amount * Math.pow(10, SOLANA_MAINNET_USDC_DECIMALS));
 
         if (action === 'compress') {
@@ -126,10 +127,16 @@ export const POST = async (req: Request) => {
             });
         } else if (action === 'decompress') {
             // Fetch and display compressed tokens
-            const compressedTokens = await getCompressedTokens(account.toBase58());
+            const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
+
+            // Select accounts to transfer from based on the transfer amount
+            const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
+                compressedTokenAccounts.items,
+                normalizedAmount,
+            );
 
             // Build the Decompress USDC transaction
-            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, compressedTokens.items, normalizedAmount);
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, inputAccounts, normalizedAmount);
 
             // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
@@ -146,7 +153,7 @@ export const POST = async (req: Request) => {
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Compressed USDC Tokens',
                                 links: {
-                                    actions: compressedTokens.items?.map((token) => ({
+                                    actions: compressedTokenAccounts.items?.map((token) => ({
                                         type: 'transaction', // Linked action type for decompression
                                         label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`,
                                         href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}&amount${token.parsed?.amount}`,
