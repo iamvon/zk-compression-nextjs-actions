@@ -58,12 +58,12 @@ export const GET = async (req: Request) => {
                     },
                     {
                         type: 'transaction',
-                        label: "Compress", // button text
+                        label: 'Compress', // button text
                         href: `${baseHref}&action=compress&amount={amount}`,
                         parameters: [
                             {
-                                name: "amount", // field name
-                                label: "Enter a custom USDC amount" // text input placeholder
+                                name: 'amount', // field name
+                                label: 'Enter a custom USDC amount' // text input placeholder
                             }
                         ]
                     },
