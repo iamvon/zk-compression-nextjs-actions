@@ -12,7 +12,6 @@ export const getCompressedTokens = async (owner: string) => {
     try {
         console.log("Using RPC URL:", rpcUrl);
         const accounts = await connection.getCompressedTokenAccountsByOwner(new PublicKey(owner));
-        console.log("getCompressedTokens accounts:", JSON.stringify(accounts))
         return accounts;
     } catch (error) {
         console.error("Error fetching compressed tokens:", error);

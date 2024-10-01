@@ -8,6 +8,7 @@ import {
 import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
 import { getCompressedTokens } from '@/app/services/compression/getCompressedTokens';
+import { buildDecompressSplTokenTx } from '@/app/services/compression/decompressSplToken';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -94,7 +95,7 @@ export const POST = async (req: Request) => {
         if (action === 'compress') {
             // Build the Compress USDC transaction
             const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
-            console.log("compress transaction:", JSON.stringify(transaction))
+
             // Return the response including the transaction and a message
             const payload = await createPostResponse({
                 fields: {
@@ -107,7 +108,7 @@ export const POST = async (req: Request) => {
                             action: {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-                                label: 'Thank You!',
+                                label: 'Done!',
                                 title: 'Compress USDC',
                                 disabled: true,
                                 description: 'USDC has been successfully compressed.',
@@ -123,12 +124,15 @@ export const POST = async (req: Request) => {
         } else if (action === 'decompress') {
             // Fetch and display compressed tokens
             const compressedTokens = await getCompressedTokens(account.toBase58());
-            console.log("compressedTokens:", JSON.stringify(compressedTokens))
-            // Prepare the next action to decompress the token
+
+            // Build the Decompress USDC transaction
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, compressedTokens.items, amount);
+            
+            // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
                 fields: {
-                    // @ts-ignore
-                    type: 'action',
+                    type: 'transaction',
+                    transaction,
                     message: 'Select a compressed token to decompress',
                     links: {
                         next: {
@@ -142,7 +146,7 @@ export const POST = async (req: Request) => {
                                     actions: compressedTokens.items?.map((token) => ({
                                         type: 'transaction', // Linked action type for decompression
                                         label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`,
-                                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}`,
+                                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}&amount${token.parsed?.amount}`,
                                     })),
                                 },
                             },

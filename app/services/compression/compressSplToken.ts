@@ -1,13 +1,10 @@
 import { clusterApiUrl, TransactionInstruction } from "@solana/web3.js";
 import {
-    LightSystemProgram,
     createRpc,
-    defaultTestStateTreeAccounts,
     Rpc
 } from "@lightprotocol/stateless.js";
 import {
     CompressedTokenProgram,
-    createTokenPool,
 } from "@lightprotocol/compressed-token";
 import { ComputeBudgetProgram, PublicKey, Transaction } from "@solana/web3.js";
 import * as splToken from "@solana/spl-token";
@@ -55,7 +52,7 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
         // Return the unsigned transaction for client-side signing
         return transaction;
     } catch (error) {
-        console.error("Error creating transaction:", error);
-        throw new Error("Transaction creation failed");
+        console.error("Error creating compress transaction:", error);
+        throw new Error("Compress Transaction creation failed");
     }
 };
