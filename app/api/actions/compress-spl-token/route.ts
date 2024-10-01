@@ -11,6 +11,7 @@ import { getCompressedTokens } from '@/app/services/compression/getCompressedTok
 import { buildDecompressSplTokenTx } from '@/app/services/compression/decompressSplToken';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const SOLANA_MAINNET_USDC_DECIMALS = 6;
 
 const headers = createActionHeaders({
     chainId: 'mainnet',
@@ -91,10 +92,12 @@ export const POST = async (req: Request) => {
         }
 
         console.log(`amount, toPubkey, action: ${amount}, ${toPubkey}, ${action}`)
+        
+        const normalizedAmount = Math.round(amount * Math.pow(10, SOLANA_MAINNET_USDC_DECIMALS));
 
         if (action === 'compress') {
             // Build the Compress USDC transaction
-            const transaction = await buildCompressSplTokenTx(account.toBase58(), amount, SOLANA_MAINNET_USDC_PUBKEY);
+            const transaction = await buildCompressSplTokenTx(account.toBase58(), normalizedAmount, SOLANA_MAINNET_USDC_PUBKEY);
 
             // Return the response including the transaction and a message
             const payload = await createPostResponse({
@@ -126,8 +129,8 @@ export const POST = async (req: Request) => {
             const compressedTokens = await getCompressedTokens(account.toBase58());
 
             // Build the Decompress USDC transaction
-            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, compressedTokens.items, amount);
-            
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, compressedTokens.items, normalizedAmount);
+
             // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
                 fields: {
