@@ -8,7 +8,8 @@ import {
 
 import { ComputeBudgetProgram, PublicKey, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-const connection: Rpc = createRpc(clusterApiUrl('mainnet-beta'));
+const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
+const connection: Rpc = createRpc(rpcUrl, rpcUrl);
 
 export const buildCompressSolTx = async (payer: string, solAmount: number): Promise<Transaction> => {
   try {

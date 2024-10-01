@@ -12,7 +12,8 @@ import {
 import { ComputeBudgetProgram, PublicKey, Transaction } from "@solana/web3.js";
 import * as splToken from "@solana/spl-token";
 
-const connection: Rpc = createRpc(clusterApiUrl('mainnet-beta'));
+const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
+const connection: Rpc = createRpc(rpcUrl, rpcUrl);
 
 export const buildCompressSplTokenTx = async (payer: string, amount: number, mintAddress: string): Promise<Transaction> => {
     try {
