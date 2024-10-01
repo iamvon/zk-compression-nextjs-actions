@@ -115,7 +115,7 @@ export const POST = async (req: Request) => {
                                 label: 'Done!',
                                 title: 'Compress USDC',
                                 disabled: true,
-                                description: 'USDC has been successfully compressed.',
+                                description: 'Your USDC has been successfully compressed.',
                             },
                         } as InlineNextActionLink,
                     },
@@ -160,22 +160,17 @@ export const POST = async (req: Request) => {
                 fields: {
                     type: 'transaction',
                     transaction,
-                    message: 'Select a compressed token to decompress',
+                    message: `Decompressed ${amount} USDC to ${toPubkey.toBase58()}`,
                     links: {
                         next: {
                             type: 'inline', // Inline action chaining
                             action: {
-                                title: 'Select a token to decompress',
-                                description: 'Choose from the list below to decompress your USDC',
+                                type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-                                label: 'Compressed USDC Tokens',
-                                links: {
-                                    actions: compressedTokenAccounts.items?.map((token) => ({
-                                        type: 'transaction', // Linked action type for decompression
-                                        label: `Decompress ${token.parsed?.amount} USDC from ${token.parsed?.mint}`,
-                                        href: `${requestUrl.origin}/api/actions/decompress-token?token=${token.parsed?.mint}&amount${token.parsed?.amount}`,
-                                    })),
-                                },
+                                label: 'Done!',
+                                title: 'Decompress USDC',
+                                disabled: true,
+                                description: 'Your USDC has been successfully decompressed.',
                             },
                         } as InlineNextActionLink,
                     },
