@@ -41,7 +41,7 @@ export const GET = async (req: Request) => {
                     {
                         type: 'transaction',
                         label: 'Compress USDC', // button text
-                        href: `${baseHref}&action=compress&amount={amount}`, // this href will have a text input
+                        href: `${baseHref}&action=compress&amount={amount}`,
                         parameters: [
                             {
                                 type: 'select',
@@ -55,6 +55,17 @@ export const GET = async (req: Request) => {
                                 ],
                             },
                         ],
+                    },
+                    {
+                        type: 'transaction',
+                        label: "Compress", // button text
+                        href: `${baseHref}&action=compress&amount={amount}`,
+                        parameters: [
+                            {
+                                name: "amount", // field name
+                                label: "Enter a custom USDC amount" // text input placeholder
+                            }
+                        ]
                     },
                     {
                         type: 'post',
