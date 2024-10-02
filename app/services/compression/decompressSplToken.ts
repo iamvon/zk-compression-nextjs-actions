@@ -51,7 +51,7 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
                 toAddress: await splToken.getAssociatedTokenAddress(
                     new PublicKey(mintAddress),
                     new PublicKey(payer)
-                ), // aestination (associated) token account address.
+                ), // destination (associated) token account address.
                 amount: maxAmount, // amount of tokens to decompress.
                 recentInputStateRootIndices: proof.rootIndices,
                 recentValidityProof: proof.compressedProof,
