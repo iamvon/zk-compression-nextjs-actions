@@ -15,22 +15,28 @@ import * as splToken from "@solana/spl-token";
 const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
 const connection: Rpc = createRpc(rpcUrl, rpcUrl);
 
-import { BN } from "@lightprotocol/stateless.js";
-
 export const buildDecompressSplTokenTx = async (payer: string, mintAddress: string, compressedTokenAccounts: ParsedTokenAccount[]): Promise<Transaction> => {
     try {
         // Fetch the latest blockhash
         const { blockhash } = await connection.getLatestBlockhash();
         const transaction = new Transaction();
 
-        // Loop through each compressed token account
-        for (const account of compressedTokenAccounts) {
-            const amount = account.parsed.amount;
+        let maxAmount: number = 0;
 
-            // Select the current account as the only input account
+        // Loop through each compressed token account to find the maximum token amount
+        for (const account of compressedTokenAccounts) {
+            const amount = account.parsed.amount.toNumber();
+
+            if (amount > maxAmount) {
+                maxAmount = amount;
+            }
+        }
+
+        if (maxAmount > 0) {
+            // Select accounts to transfer from based on the transfer amount
             const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
-                [account],
-                amount
+                compressedTokenAccounts,
+                bn(maxAmount)
             );
 
             // Fetch recent validity proof for the input account
@@ -45,8 +51,8 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
                 toAddress: await splToken.getAssociatedTokenAddress(
                     new PublicKey(mintAddress),
                     new PublicKey(payer)
-                ), // destination (associated) token account address.
-                amount: Number(amount), // amount of tokens to decompress.
+                ), // aestination (associated) token account address.
+                amount: maxAmount, // amount of tokens to decompress.
                 recentInputStateRootIndices: proof.rootIndices,
                 recentValidityProof: proof.compressedProof,
             });
