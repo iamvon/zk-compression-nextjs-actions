@@ -21,46 +21,42 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
         const { blockhash } = await connection.getLatestBlockhash();
         const transaction = new Transaction();
 
-        // Group input accounts by their amounts
-        const amountGroups = compressedTokenAccounts.reduce((acc, account) => {
+        // Loop through each compressed token account
+        for (const account of compressedTokenAccounts) {
             const amount = account.parsed.amount.toNumber();
+
+            // Only process accounts with a positive amount
             if (amount > 0) {
-                if (!acc[amount]) acc[amount] = [];
-                acc[amount].push(account);
+                // Select account to transfer from based on the transfer amount
+                const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
+                    [account],
+                    amount
+                );
+
+                // Fetch recent validity proof for the input account
+                const proof = await connection.getValidityProof(
+                    inputAccounts.map(account => bn(account.compressedAccount.hash))
+                );
+
+                // Create the decompress instruction
+                const decompressIx = await CompressedTokenProgram.decompress({
+                    payer: new PublicKey(payer), // The payer of the transaction.
+                    inputCompressedTokenAccounts: inputAccounts, // The selected input account.
+                    toAddress: await splToken.getAssociatedTokenAddress(
+                        new PublicKey(mintAddress),
+                        new PublicKey(payer)
+                    ), // destination (associated) token account address.
+                    amount: Number(amount), // amount of tokens to decompress.
+                    recentInputStateRootIndices: proof.rootIndices,
+                    recentValidityProof: proof.compressedProof,
+                });
+
+                // Add the instruction to the transaction
+                transaction.add(
+                    ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }),
+                    decompressIx
+                );
             }
-            return acc;
-        }, {} as { [key: number]: ParsedTokenAccount[] });
-
-        // Create a transaction instruction for each amount group
-        for (const [amount, compressedTokenAccounts] of Object.entries(amountGroups)) {
-            // Select accounts to transfer from based on the transfer amount
-            const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
-                compressedTokenAccounts,
-                amount,
-            );
-
-            // Fetch recent validity proof for all input accounts
-            const proof = await connection.getValidityProof(
-                inputAccounts.map(account => bn(account.compressedAccount.hash)),
-            );
-
-            const decompressIx = await CompressedTokenProgram.decompress({
-                payer: new PublicKey(payer), // The payer of the transaction.
-                inputCompressedTokenAccounts: inputAccounts, // compressed token accounts of payer.
-                toAddress: await splToken.getAssociatedTokenAddress(
-                    new PublicKey(mintAddress),
-                    new PublicKey(payer)
-                ), // destination (associated) token account address.
-                amount: Number(amount), // amount of tokens to decompress.
-                recentInputStateRootIndices: proof.rootIndices,
-                recentValidityProof: proof.compressedProof,
-            });
-
-            // Add the instruction to the transaction
-            transaction.add(
-                ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }),
-                decompressIx
-            );
         }
 
         // Add fee payer and recent blockhash
