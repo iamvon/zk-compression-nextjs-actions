@@ -9,7 +9,6 @@ import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
 import { getCompressedTokens } from '@/app/services/compression/getCompressedTokens';
 import { buildDecompressSplTokenTx } from '@/app/services/compression/decompressSplToken';
-import { selectMinCompressedTokenAccountsForTransfer } from '@lightprotocol/compressed-token';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOLANA_MAINNET_USDC_DECIMALS = 6;
@@ -145,26 +144,28 @@ export const POST = async (req: Request) => {
                 token.parsed.mint.toBase58() === SOLANA_MAINNET_USDC_PUBKEY
             );
 
-            console.log("Filtered USDC Token Accounts:", usdcTokenAccounts);
-
             // Check if there are any USDC token accounts
             if (usdcTokenAccounts.length === 0) {
                 return new Response('No USDC compressed token accounts found.', { status: 404, headers });
             }
 
-            // Select accounts to transfer from based on the transfer amount
-            const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
-                usdcTokenAccounts,
-                normalizedAmount,
-            );
+            // Filter out accounts with amounts > 0
+            const validTokenAccounts = usdcTokenAccounts.filter(token => token.parsed.amount.toNumber() > 0);
 
-            // Check if we found any accounts suitable for the transfer
-            if (!inputAccounts || inputAccounts.length === 0) {
-                return new Response('No suitable accounts found for the specified amount.', { status: 404, headers });
+            // Check if we have any valid accounts
+            if (validTokenAccounts.length === 0) {
+                return new Response('No valid accounts with amounts > 0 found.', { status: 404, headers });
             }
 
+            // Log the filtered USDC token accounts
+            console.log("Filtered USDC Token Accounts:", validTokenAccounts.map(token => ({
+                mint: token.parsed.mint.toBase58(),
+                owner: token.parsed.owner.toBase58(),
+                amount: token.parsed.amount.toNumber(),
+            })));
+
             // Build the Decompress USDC transaction
-            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, inputAccounts, normalizedAmount);
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, validTokenAccounts);
 
             // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
