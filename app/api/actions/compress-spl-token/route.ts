@@ -3,7 +3,8 @@ import {
     ActionPostRequest,
     createActionHeaders,
     InlineNextActionLink,
-    ActionGetResponse
+    ActionGetResponse,
+    LinkedAction
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
 import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
@@ -17,6 +18,45 @@ const headers = createActionHeaders({
     chainId: 'mainnet',
     actionVersion: '2.2.1',
 });
+
+function getUSDCActionLinks(baseHref: string): LinkedAction[] {
+    return [
+        {
+            type: 'external-link',
+            label: 'Compress or Decompress USDC',
+            href: `${baseHref}&action=compress&amount={amount}`,
+            parameters: [
+                {
+                    type: 'select',
+                    name: 'amount', // parameter name in the `href` above
+                    label: 'Amount of USDC to compress', // placeholder of the text input
+                    required: true,
+                    options: [
+                        { label: '0.0001', value: '0.0001' },
+                        { label: '0.001', value: '0.001' },
+                        { label: '0.1', value: '0.1' },
+                    ],
+                },
+            ],
+        },
+        {
+            type: 'transaction',
+            label: 'Compress', // button text
+            href: `${baseHref}&action=compress&amount={amount}`,
+            parameters: [
+                {
+                    name: 'amount', // field name
+                    label: 'Enter a custom USDC amount', // text input placeholder
+                },
+            ],
+        },
+        {
+            type: 'post',
+            label: 'Decompress USDC', // button text
+            href: `${baseHref}&action=decompress`,
+        },
+    ];
+}
 
 // GET handler to provide the actions for compressing and decompressing Spl Token
 export const GET = async (req: Request) => {
@@ -36,42 +76,7 @@ export const GET = async (req: Request) => {
             description: 'Compress or Decompress USDC to save or retrieve your tokens.',
             label: 'Compress or Decompress USDC',
             links: {
-                actions: [
-                    {
-                        type: 'transaction',
-                        label: 'Compress USDC', // button text
-                        href: `${baseHref}&action=compress&amount={amount}`,
-                        parameters: [
-                            {
-                                type: 'select',
-                                name: 'amount', // parameter name in the `href` above
-                                label: 'Amount of USDC to compress', // placeholder of the text input
-                                required: true,
-                                options: [
-                                    { label: '0.0001', value: '0.0001' },
-                                    { label: '0.001', value: '0.001' },
-                                    { label: '0.1', value: '0.1' },
-                                ],
-                            },
-                        ],
-                    },
-                    {
-                        type: 'transaction',
-                        label: 'Compress', // button text
-                        href: `${baseHref}&action=compress&amount={amount}`,
-                        parameters: [
-                            {
-                                name: 'amount', // field name
-                                label: 'Enter a custom USDC amount' // text input placeholder
-                            }
-                        ]
-                    },
-                    {
-                        type: 'post',
-                        label: 'Decompress USDC', // button text
-                        href: `${baseHref}&action=decompress`,
-                    },
-                ],
+                actions: getUSDCActionLinks(baseHref)
             },
         };
 
@@ -107,6 +112,11 @@ export const POST = async (req: Request) => {
         const normalizedAmount = Math.round(amount * Math.pow(10, SOLANA_MAINNET_USDC_DECIMALS));
 
         if (action === 'compress') {
+            const baseHref = new URL(
+                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+                requestUrl.origin,
+            ).toString();
+
             // Build the Compress USDC transaction
             const transaction = await buildCompressSplTokenTx(account.toBase58(), normalizedAmount, SOLANA_MAINNET_USDC_PUBKEY);
 
@@ -126,6 +136,9 @@ export const POST = async (req: Request) => {
                                 title: 'Compress USDC',
                                 disabled: true,
                                 description: 'Your USDC has been successfully compressed.',
+                                links: {
+                                    actions: getUSDCActionLinks(baseHref)
+                                }
                             },
                         } as InlineNextActionLink,
                     },
