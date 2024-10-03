@@ -73,7 +73,7 @@ export const GET = async (req: Request) => {
             type: 'action',
             title: 'Compress or Decompress USDC',
             icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-            description: 'Compress or Decompress USDC to save or retrieve your tokens.',
+            description: 'Compress or Decompress your USDC tokens in a blink! 👀',
             label: 'Compress or Decompress USDC',
             links: {
                 actions: getUSDCActionLinks(baseHref)
@@ -133,9 +133,9 @@ export const POST = async (req: Request) => {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
-                                title: 'Compress USDC',
+                                title: 'Compress or Decompress USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully compressed.',
+                                description: 'Your USDC has been successfully compressed! You can now decompress it.',
                                 links: {
                                     actions: getUSDCActionLinks(baseHref)
                                 }
@@ -198,9 +198,9 @@ export const POST = async (req: Request) => {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
-                                title: 'Decompress USDC',
+                                title: 'Compress or Decompress USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully decompressed.',
+                                description: 'Your USDC has been successfully decompressed! You can now compress it.',
                                 links: {
                                     actions: getUSDCActionLinks(baseHref)
                                 }
