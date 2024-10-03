@@ -23,7 +23,7 @@ function getUSDCActionLinks(baseHref: string): LinkedAction[] {
     return [
         {
             type: 'transaction',
-            label: 'Compress or Decompress USDC',
+            label: 'Compress USDC',
             href: `${baseHref}&action=compress&amount={amount}`,
             parameters: [
                 {
@@ -50,6 +50,50 @@ function getUSDCActionLinks(baseHref: string): LinkedAction[] {
                 },
             ],
         },
+        {
+            type: 'post',
+            label: 'Decompress USDC', // button text
+            href: `${baseHref}&action=decompress`,
+        },
+    ];
+}
+
+function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
+    return [
+        {
+            type: 'transaction',
+            label: 'Compress USDC',
+            href: `${baseHref}&action=compress&amount={amount}`,
+            parameters: [
+                {
+                    type: 'select',
+                    name: 'amount', // parameter name in the `href` above
+                    label: 'Amount of USDC to compress', // placeholder of the text input
+                    required: true,
+                    options: [
+                        { label: '0.0001', value: '0.0001' },
+                        { label: '0.001', value: '0.001' },
+                        { label: '0.1', value: '0.1' },
+                    ],
+                },
+            ],
+        },
+        {
+            type: 'transaction',
+            label: 'Compress', // button text
+            href: `${baseHref}&action=compress&amount={amount}`,
+            parameters: [
+                {
+                    name: 'amount', // field name
+                    label: 'Enter a custom USDC amount', // text input placeholder
+                },
+            ],
+        },
+    ];
+}
+
+function getDecompressUSDCActionLinks(baseHref: string): LinkedAction[] {
+    return [
         {
             type: 'post',
             label: 'Decompress USDC', // button text
@@ -133,11 +177,11 @@ export const POST = async (req: Request) => {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
-                                title: 'Compress or Decompress USDC',
+                                title: 'Decompress USDC',
                                 disabled: false,
                                 description: 'Your USDC has been successfully compressed! You can now decompress it.',
                                 links: {
-                                    actions: getUSDCActionLinks(baseHref)
+                                    actions: getDecompressUSDCActionLinks(baseHref)
                                 }
                             },
                         } as InlineNextActionLink,
@@ -198,11 +242,11 @@ export const POST = async (req: Request) => {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
-                                title: 'Compress or Decompress USDC',
+                                title: 'Compress USDC',
                                 disabled: false,
                                 description: 'Your USDC has been successfully decompressed! You can now compress it.',
                                 links: {
-                                    actions: getUSDCActionLinks(baseHref)
+                                    actions: getCompressUSDCActionLinks(baseHref)
                                 }
                             },
                         } as InlineNextActionLink,
