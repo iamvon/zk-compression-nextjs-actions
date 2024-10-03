@@ -134,7 +134,7 @@ export const POST = async (req: Request) => {
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
                                 title: 'Compress USDC',
-                                disabled: true,
+                                disabled: false,
                                 description: 'Your USDC has been successfully compressed.',
                                 links: {
                                     actions: getUSDCActionLinks(baseHref)
@@ -199,7 +199,7 @@ export const POST = async (req: Request) => {
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Done!',
                                 title: 'Decompress USDC',
-                                disabled: true,
+                                disabled: false,
                                 description: 'Your USDC has been successfully decompressed.',
                                 links: {
                                     actions: getUSDCActionLinks(baseHref)
