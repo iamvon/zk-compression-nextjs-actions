@@ -22,7 +22,7 @@ const headers = createActionHeaders({
 function getUSDCActionLinks(baseHref: string): LinkedAction[] {
     return [
         {
-            type: 'external-link',
+            type: 'transaction',
             label: 'Compress or Decompress USDC',
             href: `${baseHref}&action=compress&amount={amount}`,
             parameters: [
@@ -149,6 +149,11 @@ export const POST = async (req: Request) => {
                 headers,
             });
         } else if (action === 'decompress') {
+            const baseHref = new URL(
+                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+                requestUrl.origin,
+            ).toString();
+
             // Fetch and display compressed tokens
             const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
 
@@ -196,6 +201,9 @@ export const POST = async (req: Request) => {
                                 title: 'Decompress USDC',
                                 disabled: true,
                                 description: 'Your USDC has been successfully decompressed.',
+                                links: {
+                                    actions: getUSDCActionLinks(baseHref)
+                                }
                             },
                         } as InlineNextActionLink,
                     },
