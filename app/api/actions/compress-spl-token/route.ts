@@ -90,12 +90,12 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
     ];
 }
 
-function getDecompressUSDCActionLinks(baseHref: string): LinkedAction[] {
+function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string): LinkedAction[] {
     return [
         {
             type: 'post',
             label: 'Decompress USDC', // button text
-            href: `${baseHref}&action=decompress`,
+            href: `${baseHref}?to=${toDefaultPubkey}&action=decompress`,
         },
         {
             type: 'transaction',
@@ -199,7 +199,7 @@ export const POST = async (req: Request) => {
 
         if (action === 'compress') {
             const baseHref = new URL(
-                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+                `/api/actions/compress-spl-token`,
                 requestUrl.origin,
             ).toString();
 
@@ -223,7 +223,7 @@ export const POST = async (req: Request) => {
                                 disabled: false,
                                 description: 'Your USDC has been successfully compressed! You can now decompress it.',
                                 links: {
-                                    actions: getDecompressUSDCActionLinks(baseHref)
+                                    actions: getDecompressUSDCActionLinks(baseHref, toPubkey.toBase58())
                                 }
                             },
                         } as InlineNextActionLink,
