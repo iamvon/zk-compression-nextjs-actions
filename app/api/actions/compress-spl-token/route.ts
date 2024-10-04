@@ -7,9 +7,7 @@ import {
     LinkedAction
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
-import { buildCompressSplTokenTx } from '@/app/services/compression/compressSplToken';
-import { getCompressedTokens } from '@/app/services/compression/getCompressedTokens';
-import { buildDecompressSplTokenTx } from '@/app/services/compression/decompressSplToken';
+import { getCompressedTokens, buildCompressSplTokenTx, buildDecompressSplTokenTx } from '@/app/services/compression';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOLANA_MAINNET_USDC_DECIMALS = 6;

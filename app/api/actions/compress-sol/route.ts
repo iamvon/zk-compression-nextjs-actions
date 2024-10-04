@@ -6,7 +6,7 @@ import {
     createActionHeaders,
   } from '@solana/actions';
   import { PublicKey } from '@solana/web3.js';
-  import { buildCompressSolTx } from '@/app/services/compression/compressSol';
+  import { buildCompressSolTx } from '@/app/services/compression';
   
   const headers = createActionHeaders();
   
