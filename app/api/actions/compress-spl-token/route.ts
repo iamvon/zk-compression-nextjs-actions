@@ -99,8 +99,14 @@ function getDecompressUSDCActionLinks(baseHref: string): LinkedAction[] {
         },
         {
             type: 'post',
+            href: `${baseHref}&action=transfer&toPubkey={toPubkey}`,
             label: 'Transfer Compressed USDC', // button text
-            href: `${baseHref}&action=transfer`,
+            parameters: [
+                {
+                    name: 'toPubkey', // field name
+                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
+                },
+            ],
         },
     ];
 }
