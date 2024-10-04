@@ -99,7 +99,7 @@ function getDecompressUSDCActionLinks(baseHref: string): LinkedAction[] {
         },
         {
             type: 'post',
-            href: `${baseHref}&action=transfer&toPubkey={toPubkey}`,
+            href: `${baseHref}&action=transfer&to={toPubkey}`,
             label: 'Transfer Compressed USDC', // button text
             parameters: [
                 {
