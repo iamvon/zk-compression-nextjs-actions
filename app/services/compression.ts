@@ -127,6 +127,10 @@ export const buildTransferCompressedTokenTx = async (payer: string, recipient: s
             const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts, bn(maxAmount));
             const proof = await connection.getValidityProof(inputAccounts.map(account => bn(account.compressedAccount.hash)));
 
+            console.log(`buildTransferCompressedTokenTx 
+            payer, inputCompressedTokenAccounts, toAddress, amount, recentInputStateRootIndices, recentValidityProof
+            : ${payer}, ${inputAccounts}, ${recipient}, ${maxAmount}, ${proof.rootIndices}, ${proof.compressedProof}`)
+
             const decompressIx = await CompressedTokenProgram.transfer({
                 payer: new PublicKey(payer),
                 inputCompressedTokenAccounts: inputAccounts,
