@@ -7,7 +7,7 @@ import {
     LinkedAction
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
-import { getCompressedTokens, buildCompressSplTokenTx, buildDecompressSplTokenTx } from '@/app/services/compression';
+import { getCompressedTokens, buildCompressSplTokenTx, buildDecompressSplTokenTx, buildTransferCompressedTokenTx } from '@/app/services/compression';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOLANA_MAINNET_USDC_DECIMALS = 6;
@@ -97,7 +97,45 @@ function getDecompressUSDCActionLinks(baseHref: string): LinkedAction[] {
             label: 'Decompress USDC', // button text
             href: `${baseHref}&action=decompress`,
         },
+        {
+            type: 'post',
+            label: 'Transfer Compressed USDC', // button text
+            href: `${baseHref}&action=transfer`,
+        },
     ];
+}
+
+// Fetch and filter valid compressed token accounts for any SPL token
+async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: PublicKey) {
+    // Fetch and display compressed tokens
+    const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
+
+    // Filter to find compressed token accounts for the specified mint address
+    const tokenAccounts = compressedTokenAccounts.items.filter(token =>
+        token.parsed.mint.toBase58() === mintAddress.toBase58()
+    );
+
+    // Check if there are any token accounts for the specified mint
+    if (tokenAccounts.length === 0) {
+        throw new Error(`No compressed token accounts found for mint ${mintAddress.toBase58()}.`);
+    }
+
+    // Filter out accounts with amounts > 0
+    const validTokenAccounts = tokenAccounts.filter(token => token.parsed.amount.toNumber() > 0);
+
+    // Check if we have any valid accounts
+    if (validTokenAccounts.length === 0) {
+        throw new Error('No valid accounts with amounts > 0 found.');
+    }
+
+    // Log the filtered token accounts
+    console.log("Filtered Token Accounts:", validTokenAccounts.map(token => ({
+        mint: token.parsed.mint.toBase58(),
+        owner: token.parsed.owner.toBase58(),
+        amount: token.parsed.amount.toNumber(),
+    })));
+
+    return validTokenAccounts;
 }
 
 // GET handler to provide the actions for compressing and decompressing Spl Token
@@ -196,33 +234,8 @@ export const POST = async (req: Request) => {
                 requestUrl.origin,
             ).toString();
 
-            // Fetch and display compressed tokens
-            const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
-
-            // Filter to find compressed USDC token accounts
-            const usdcTokenAccounts = compressedTokenAccounts.items.filter(token =>
-                token.parsed.mint.toBase58() === SOLANA_MAINNET_USDC_PUBKEY
-            );
-
-            // Check if there are any USDC token accounts
-            if (usdcTokenAccounts.length === 0) {
-                return new Response('No USDC compressed token accounts found.', { status: 404, headers });
-            }
-
-            // Filter out accounts with amounts > 0
-            const validTokenAccounts = usdcTokenAccounts.filter(token => token.parsed.amount.toNumber() > 0);
-
-            // Check if we have any valid accounts
-            if (validTokenAccounts.length === 0) {
-                return new Response('No valid accounts with amounts > 0 found.', { status: 404, headers });
-            }
-
-            // Log the filtered USDC token accounts
-            console.log("Filtered USDC Token Accounts:", validTokenAccounts.map(token => ({
-                mint: token.parsed.mint.toBase58(),
-                owner: token.parsed.owner.toBase58(),
-                amount: token.parsed.amount.toNumber(),
-            })));
+            // Fetch valid compressed USDC token accounts
+            const validTokenAccounts = await getValidCompressedTokenAccounts(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
 
             // Build the Decompress USDC transaction
             const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, validTokenAccounts);
@@ -243,6 +256,45 @@ export const POST = async (req: Request) => {
                                 title: 'Compress USDC',
                                 disabled: false,
                                 description: 'Your USDC has been successfully decompressed! You can now compress it.',
+                                links: {
+                                    actions: getCompressUSDCActionLinks(baseHref)
+                                }
+                            },
+                        } as InlineNextActionLink,
+                    },
+                },
+            });
+
+            return Response.json(payload, {
+                headers,
+            });
+        } else if (action === 'transfer') {
+            const baseHref = new URL(
+                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+                requestUrl.origin,
+            ).toString();
+
+            // Fetch valid compressed USDC token accounts
+            const validTokenAccounts = await getValidCompressedTokenAccounts(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
+            // Build the Transfer Compressed USDC transaction
+            const transaction = await buildTransferCompressedTokenTx(account.toBase58(), toPubkey.toBase58(), validTokenAccounts);
+
+            // Prepare the next action to compress the Spl tokens
+            const payload = await createPostResponse({
+                fields: {
+                    type: 'transaction',
+                    transaction,
+                    message: `Sent ${amount} compressed USDC to ${toPubkey.toBase58()}`,
+                    links: {
+                        next: {
+                            type: 'inline', // Inline action chaining
+                            action: {
+                                type: 'action',
+                                icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
+                                label: 'Done!',
+                                title: 'Compress USDC',
+                                disabled: false,
+                                description: 'Your USDC has been successfully sent! Now you can continue compressing it.',
                                 links: {
                                     actions: getCompressUSDCActionLinks(baseHref)
                                 }
