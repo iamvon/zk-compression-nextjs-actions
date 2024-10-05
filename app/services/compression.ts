@@ -8,10 +8,12 @@ const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-
 const connection: Rpc = createRpc(rpcUrl, rpcUrl);
 
 // Fetch compressed tokens by owner
-export const getCompressedTokens = async (owner: string) => {
+export const getCompressedTokens = async (owner: string, mintAddress: string) => {
     try {
         console.log("Using RPC URL:", rpcUrl);
-        const accounts = await connection.getCompressedTokenAccountsByOwner(new PublicKey(owner));
+        const accounts = await connection.getCompressedTokenAccountsByOwner(new PublicKey(owner), {
+            mint: new PublicKey(mintAddress)
+        });
 
         // Deduplicate tokens with the same mint address and add the amounts
         const deduplicatedAccounts = accounts.items.reduce((acc, current) => {
@@ -44,7 +46,7 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
         });
 
         const transaction = new Transaction();
-        
+
         transaction.add(
             ComputeBudgetProgram.setComputeUnitLimit({
                 units: computeUnitLimit
@@ -54,7 +56,7 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
             }),
             compressSolIx
         );
-        
+
         transaction.feePayer = new PublicKey(payer);
         transaction.recentBlockhash = blockhash;
 
@@ -91,7 +93,7 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
             }),
             compressIx
         );
-        
+
         transaction.feePayer = new PublicKey(payer);
         transaction.recentBlockhash = blockhash;
 
@@ -103,7 +105,7 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
 };
 
 // Build transaction to decompress SPL tokens
-export const buildDecompressSplTokenTx = async (payer: string, mintAddress: string, compressedTokenAccounts: ParsedTokenAccount[], maxAmount: number): Promise<Transaction> => {
+export const buildDecompressSplTokenTx = async (payer: string, mintAddress: string, maxAmount: number): Promise<Transaction> => {
     try {
         const { blockhash } = await connection.getLatestBlockhash();
         const transaction = new Transaction();
@@ -131,8 +133,22 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
                 transaction.add(createAtaIx);
             }
 
-            const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts, bn(maxAmount));
-            const proof = await connection.getValidityProof(inputAccounts.map(account => bn(account.compressedAccount.hash)));
+            // Fetch the latest compressed token account state
+            const compressedTokenAccounts =
+                await connection.getCompressedTokenAccountsByOwner(new PublicKey(payer), {
+                    mint: new PublicKey(mintAddress)
+                });
+
+            // Select accounts to transfer from based on the transfer amount
+            const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(
+                compressedTokenAccounts.items,
+                bn(maxAmount),
+            );
+
+            // Fetch recent validity proof
+            const proof = await connection.getValidityProof(
+                inputAccounts.map(account => bn(account.compressedAccount.hash)),
+            );
 
             const decompressIx = await CompressedTokenProgram.decompress({
                 payer: new PublicKey(payer),

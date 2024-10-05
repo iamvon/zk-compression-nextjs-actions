@@ -150,20 +150,15 @@ async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey
 // Fetch and filter valid compressed token accounts for any SPL token
 async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: PublicKey) {
     // Fetch and display compressed tokens
-    const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
-
-    // Filter to find compressed token accounts for the specified mint address
-    const tokenAccounts = compressedTokenAccounts.filter(token =>
-        token.parsed.mint.toBase58() === mintAddress.toBase58()
-    );
+    const compressedTokenAccounts = await getCompressedTokens(account.toBase58(), mintAddress.toBase58());
 
     // Check if there are any token accounts for the specified mint
-    if (tokenAccounts.length === 0) {
+    if (compressedTokenAccounts.length === 0) {
         throw new Error(`No compressed token accounts found for mint ${mintAddress.toBase58()}.`);
     }
 
     // Filter out accounts with amounts > 0
-    const validTokenAccounts = tokenAccounts.filter(token => token.parsed.amount.toNumber() > 0);
+    const validTokenAccounts = compressedTokenAccounts.filter(token => token.parsed.amount.toNumber() > 0);
 
     // Check if we have any valid accounts
     if (validTokenAccounts.length === 0) {
@@ -282,7 +277,7 @@ export const POST = async (req: Request) => {
             const maxCompressedAmount = await getMaxCompressedAmount(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY), validTokenAccounts);
 
             // Build the Decompress USDC transaction
-            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, validTokenAccounts, maxCompressedAmount);
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, maxCompressedAmount);
 
             // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
