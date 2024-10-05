@@ -64,7 +64,7 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
         {
             type: 'transaction',
             label: 'Compress USDC',
-            href: `${baseHref}&action=compress&amount={amount}`,
+            href: `${baseHref}?action=compress&amount={amount}`,
             parameters: [
                 {
                     type: 'select',
@@ -82,7 +82,7 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
         {
             type: 'transaction',
             label: 'Compress', // button text
-            href: `${baseHref}&action=compress&amount={amount}`,
+            href: `${baseHref}?action=compress&amount={amount}`,
             parameters: [
                 {
                     name: 'amount', // field name
@@ -271,7 +271,7 @@ export const POST = async (req: Request) => {
             });
         } else if (action === 'decompress') {
             const baseHref = new URL(
-                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+                `/api/actions/compress-spl-token`,
                 requestUrl.origin,
             ).toString();
 
@@ -286,7 +286,7 @@ export const POST = async (req: Request) => {
                 fields: {
                     type: 'transaction',
                     transaction,
-                    message: `Decompressed ${amount} USDC to ${toPubkey.toBase58()}`,
+                    message: `Decompressed ${amount} USDC to ${account.toBase58()}`,
                     links: {
                         next: {
                             type: 'inline', // Inline action chaining
