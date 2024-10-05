@@ -1,8 +1,7 @@
-import { clusterApiUrl, PublicKey, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { clusterApiUrl, PublicKey, Transaction, LAMPORTS_PER_SOL, ComputeBudgetProgram } from "@solana/web3.js";
 import { LightSystemProgram, createRpc, defaultTestStateTreeAccounts, Rpc, bn, ParsedTokenAccount } from "@lightprotocol/stateless.js";
-import { ComputeBudgetProgram } from "@solana/web3.js";
-import * as splToken from "@solana/spl-token";
-import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer, transfer } from "@lightprotocol/compressed-token";
+import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from "@lightprotocol/compressed-token";
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
 
 const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
 const connection: Rpc = createRpc(rpcUrl, rpcUrl);
@@ -47,7 +46,7 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
 export const buildCompressSplTokenTx = async (payer: string, amount: number, mintAddress: string): Promise<Transaction> => {
     try {
         const { blockhash } = await connection.getLatestBlockhash();
-        const sourceTokenAccount = await splToken.getAssociatedTokenAddress(new PublicKey(mintAddress), new PublicKey(payer));
+        const sourceTokenAccount = await getAssociatedTokenAddress(new PublicKey(mintAddress), new PublicKey(payer));
 
         const compressIx = await CompressedTokenProgram.compress({
             payer: new PublicKey(payer),
@@ -85,19 +84,41 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
         }
 
         if (maxAmount > 0) {
+            // Calculate ATA
+            const ata = await getAssociatedTokenAddress(
+                new PublicKey(mintAddress),
+                new PublicKey(payer),
+            );
+
+            // Check if the ATA exists
+            const ataInfo = await connection.getAccountInfo(ata);
+            const ataExists = ataInfo !== null;
+
+            if (!ataExists) {
+                // Create an associated token account if it doesn't exist
+                const createAtaIx = await createAssociatedTokenAccountInstruction(
+                    new PublicKey(payer),
+                    ata,
+                    new PublicKey(payer),
+                    new PublicKey(mintAddress),
+                );
+
+                transaction.add(createAtaIx);
+            }
+
             const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts, bn(maxAmount));
             const proof = await connection.getValidityProof(inputAccounts.map(account => bn(account.compressedAccount.hash)));
 
             const decompressIx = await CompressedTokenProgram.decompress({
                 payer: new PublicKey(payer),
                 inputCompressedTokenAccounts: inputAccounts,
-                toAddress: await splToken.getAssociatedTokenAddress(new PublicKey(mintAddress), new PublicKey(payer)),
+                toAddress: await getAssociatedTokenAddress(new PublicKey(mintAddress), new PublicKey(payer)),
                 amount: maxAmount,
                 recentInputStateRootIndices: proof.rootIndices,
                 recentValidityProof: proof.compressedProof,
             });
 
-            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }), decompressIx);
+            transaction.add(decompressIx);
         }
 
         transaction.feePayer = new PublicKey(payer);
