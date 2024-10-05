@@ -22,7 +22,7 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
         {
             type: 'transaction',
             label: 'Compress USDC',
-            href: `${baseHref}&action=compress&amount={amount}`,
+            href: `${baseHref}?action=compress&amount={amount}`,
             parameters: [
                 {
                     type: 'select',
@@ -40,7 +40,7 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
         {
             type: 'transaction',
             label: 'Compress', // button text
-            href: `${baseHref}&action=compress&amount={amount}`,
+            href: `${baseHref}?action=compress&amount={amount}`,
             parameters: [
                 {
                     name: 'amount', // field name
@@ -51,7 +51,7 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
         {
             type: 'post',
             label: `Decompress USDC`, // button text
-            href: `${baseHref}&action=decompress`,
+            href: `${baseHref}?action=decompress`,
             error: {
                 message: `No compressed USDC found!`,
             },
@@ -184,10 +184,9 @@ async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: 
 export const GET = async (req: Request) => {
     try {
         const requestUrl = new URL(req.url);
-        const { toPubkey } = validatedQueryParams(requestUrl);
 
         const baseHref = new URL(
-            `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
+            `/api/actions/compress-spl-token}`,
             requestUrl.origin,
         ).toString();
 
@@ -302,6 +301,9 @@ export const POST = async (req: Request) => {
                                     actions: getCompressUSDCActionLinks(baseHref)
                                 }
                             },
+                            error: {
+                                message: `No compressed USDC found!`,
+                            }
                         } as InlineNextActionLink,
                     },
                 },
