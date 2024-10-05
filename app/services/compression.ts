@@ -2,7 +2,7 @@ import { clusterApiUrl, PublicKey, Transaction, LAMPORTS_PER_SOL, ComputeBudgetP
 import { LightSystemProgram, createRpc, defaultTestStateTreeAccounts, Rpc, bn, ParsedTokenAccount } from "@lightprotocol/stateless.js";
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
-import { computeUnitLimit } from "./constants";
+import { computeUnitLimit, computeUnitPrice } from "./constants";
 
 const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
 const connection: Rpc = createRpc(rpcUrl, rpcUrl);
@@ -36,7 +36,7 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
     try {
         const { blockhash } = await connection.getLatestBlockhash();
 
-        const ix = await LightSystemProgram.compress({
+        const compressSolIx = await LightSystemProgram.compress({
             payer: new PublicKey(payer),
             toAddress: new PublicKey(payer),
             lamports: solAmount * LAMPORTS_PER_SOL,
@@ -44,8 +44,18 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
         });
 
         const transaction = new Transaction();
+        
+        transaction.add(
+            ComputeBudgetProgram.setComputeUnitLimit({
+                units: computeUnitLimit
+            }),
+            ComputeBudgetProgram.setComputeUnitPrice({
+                microLamports: computeUnitPrice,
+            }),
+            compressSolIx
+        );
+        
         transaction.feePayer = new PublicKey(payer);
-        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), ix);
         transaction.recentBlockhash = blockhash;
 
         return transaction;
@@ -71,8 +81,18 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
         });
 
         const transaction = new Transaction();
+
+        transaction.add(
+            ComputeBudgetProgram.setComputeUnitLimit({
+                units: computeUnitLimit
+            }),
+            ComputeBudgetProgram.setComputeUnitPrice({
+                microLamports: computeUnitPrice,
+            }),
+            compressIx
+        );
+        
         transaction.feePayer = new PublicKey(payer);
-        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), compressIx);
         transaction.recentBlockhash = blockhash;
 
         return transaction;
@@ -123,7 +143,15 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
                 recentValidityProof: proof.compressedProof,
             });
 
-            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), decompressIx);
+            transaction.add(
+                ComputeBudgetProgram.setComputeUnitLimit({
+                    units: computeUnitLimit
+                }),
+                ComputeBudgetProgram.setComputeUnitPrice({
+                    microLamports: computeUnitPrice,
+                }),
+                decompressIx
+            );
         }
 
         transaction.feePayer = new PublicKey(payer);
@@ -162,7 +190,15 @@ export const buildTransferCompressedTokenTx = async (payer: string, recipient: s
                 recentValidityProof: proof.compressedProof,
             });
 
-            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), transferCompressedTokenTx);
+            transaction.add(
+                ComputeBudgetProgram.setComputeUnitLimit({
+                    units: computeUnitLimit
+                }),
+                ComputeBudgetProgram.setComputeUnitPrice({
+                    microLamports: computeUnitPrice,
+                }),
+                transferCompressedTokenTx
+            );
         }
 
         transaction.feePayer = new PublicKey(payer);
