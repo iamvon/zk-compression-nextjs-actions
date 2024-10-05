@@ -4,7 +4,7 @@ import {
     createActionHeaders,
     InlineNextActionLink,
     ActionGetResponse,
-    LinkedAction
+    LinkedAction,
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
 import { getCompressedTokens, buildCompressSplTokenTx, buildDecompressSplTokenTx, buildTransferCompressedTokenTx } from '@/app/services/compression';
@@ -17,11 +17,8 @@ const headers = createActionHeaders({
     actionVersion: '2.2.1',
 });
 
-async function getUSDCActionLinks(baseHref: string, account: string): Promise<LinkedAction[]> {
-    // Find the token amount can be decompressed
-    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(account), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY))
-
-    const actions: LinkedAction[] = [
+async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
+    return [
         {
             type: 'transaction',
             label: 'Compress USDC',
@@ -51,17 +48,15 @@ async function getUSDCActionLinks(baseHref: string, account: string): Promise<Li
                 },
             ],
         },
-    ];
-
-    if (maxCompressedAmount > 0) {
-        actions.push({
+        {
             type: 'post',
-            label: `Decompress ${maxCompressedAmount} USDC`, // button text
+            label: `Decompress USDC`, // button text
             href: `${baseHref}&action=decompress`,
-        });
-    }
-
-    return actions;
+            error: {
+                message: `No compressed USDC found!`,
+            },
+        } as LinkedAction,
+    ];
 }
 
 function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
@@ -203,7 +198,7 @@ export const GET = async (req: Request) => {
             description: 'Compress or Decompress your USDC tokens in a blink! 👀',
             label: 'Compress or Decompress USDC',
             links: {
-                actions: await getUSDCActionLinks(baseHref, toPubkey.toBase58())
+                actions: await getUSDCActionLinks(baseHref)
             },
         };
 
