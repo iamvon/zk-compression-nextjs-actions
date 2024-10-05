@@ -296,7 +296,7 @@ export const POST = async (req: Request) => {
                                 label: 'Done!',
                                 title: 'Compress USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully decompressed! You can now compress it.',
+                                description: 'Your USDC has been successfully decompressed! Now you can compress it.',
                                 links: {
                                     actions: getCompressUSDCActionLinks(baseHref)
                                 }
