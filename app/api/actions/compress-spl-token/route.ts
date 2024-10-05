@@ -292,7 +292,7 @@ export const POST = async (req: Request) => {
                 fields: {
                     type: 'transaction',
                     transaction,
-                    message: `Decompressed ${maxCompressedAmount} USDC to ${account.toBase58()}`,
+                    message: `Decompressed ${maxCompressedAmount / Math.pow(10, SOLANA_MAINNET_USDC_DECIMALS)} USDC to ${account.toBase58()}`,
                     links: {
                         next: {
                             type: 'inline', // Inline action chaining
