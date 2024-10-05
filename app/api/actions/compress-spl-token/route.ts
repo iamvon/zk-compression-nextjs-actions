@@ -20,8 +20,8 @@ const headers = createActionHeaders({
 async function getUSDCActionLinks(baseHref: string, account: string): Promise<LinkedAction[]> {
     // Find the token amount can be decompressed
     const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(account), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY))
-    
-    return [
+
+    const actions: LinkedAction[] = [
         {
             type: 'transaction',
             label: 'Compress USDC',
@@ -51,12 +51,17 @@ async function getUSDCActionLinks(baseHref: string, account: string): Promise<Li
                 },
             ],
         },
-        {
+    ];
+
+    if (maxCompressedAmount > 0) {
+        actions.push({
             type: 'post',
             label: `Decompress ${maxCompressedAmount} USDC`, // button text
             href: `${baseHref}&action=decompress`,
-        },
-    ];
+        });
+    }
+
+    return actions;
 }
 
 function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
@@ -94,41 +99,53 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
 }
 
 async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string): Promise<LinkedAction[]> {
-    // Find the token amount can be decompressed
-    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(toDefaultPubkey), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY))
+    // Find the token amount that can be decompressed
+    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(toDefaultPubkey), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
 
-    return [
-        {
-            type: 'post',
-            label: `Decompress ${maxCompressedAmount} USDC`, // button text
-            href: `${baseHref}?to=${toDefaultPubkey}&action=decompress`,
-        },
-        {
-            type: 'transaction',
-            href: `${baseHref}?to={toPubkey}&action=transfer`,
-            label: `Transfer ${maxCompressedAmount} compressed USDC`, // button text
-            parameters: [
-                {
-                    name: 'toPubkey', // field name
-                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
-                },
-            ],
-        },
-    ];
+    const actions: LinkedAction[] = [];
+
+    if (maxCompressedAmount > 0) {
+        actions.push(
+            {
+                type: 'post',
+                label: `Decompress ${maxCompressedAmount} USDC`, // button text
+                href: `${baseHref}?to=${toDefaultPubkey}&action=decompress`,
+            },
+            {
+                type: 'transaction',
+                href: `${baseHref}?to={toPubkey}&action=transfer`,
+                label: `Transfer ${maxCompressedAmount} compressed USDC`, // button text
+                parameters: [
+                    {
+                        name: 'toPubkey', // field name
+                        label: 'Enter the wallet address to send compressed USDC', // text input placeholder
+                    },
+                ],
+            }
+        );
+    }
+
+    return actions;
 }
 
 // Find the maximum compressed token amount
 async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey): Promise<number> {
-    // Fetch valid compressed USDC token accounts
-    const validTokenAccounts = await getValidCompressedTokenAccounts(account, mintAddress);
-    account
-    // Find the token amount that can be decompressed
     let maxCompressedAmount = 0;
-    for (const account of validTokenAccounts) {
-        const amount = account.parsed.amount.toNumber();
-        if (amount > maxCompressedAmount) {
-            maxCompressedAmount = amount;
+
+    try {
+        // Fetch valid compressed USDC token accounts
+        const validTokenAccounts = await getValidCompressedTokenAccounts(account, mintAddress);
+
+        // Find the token amount that can be decompressed
+        for (const account of validTokenAccounts) {
+            const amount = account.parsed.amount.toNumber();
+            if (amount > maxCompressedAmount) {
+                maxCompressedAmount = amount;
+            }
         }
+    } catch (error) {
+        console.log(`Error fetching compressed token accounts: ${error}`);
+        maxCompressedAmount = 0; // Return 0 if no valid accounts are found
     }
 
     return maxCompressedAmount;
