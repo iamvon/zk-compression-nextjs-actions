@@ -2,6 +2,7 @@ import { clusterApiUrl, PublicKey, Transaction, LAMPORTS_PER_SOL, ComputeBudgetP
 import { LightSystemProgram, createRpc, defaultTestStateTreeAccounts, Rpc, bn, ParsedTokenAccount } from "@lightprotocol/stateless.js";
 import { CompressedTokenProgram, selectMinCompressedTokenAccountsForTransfer } from "@lightprotocol/compressed-token";
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
+import { computeUnitLimit } from "./constants";
 
 const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
 const connection: Rpc = createRpc(rpcUrl, rpcUrl);
@@ -32,7 +33,7 @@ export const buildCompressSolTx = async (payer: string, solAmount: number): Prom
 
         const transaction = new Transaction();
         transaction.feePayer = new PublicKey(payer);
-        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }), ix);
+        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), ix);
         transaction.recentBlockhash = blockhash;
 
         return transaction;
@@ -59,7 +60,7 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
 
         const transaction = new Transaction();
         transaction.feePayer = new PublicKey(payer);
-        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }), compressIx);
+        transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), compressIx);
         transaction.recentBlockhash = blockhash;
 
         return transaction;
@@ -110,7 +111,7 @@ export const buildDecompressSplTokenTx = async (payer: string, mintAddress: stri
                 recentValidityProof: proof.compressedProof,
             });
 
-            transaction.add(decompressIx);
+            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), decompressIx);
         }
 
         transaction.feePayer = new PublicKey(payer);
@@ -140,11 +141,7 @@ export const buildTransferCompressedTokenTx = async (payer: string, recipient: s
             const [inputAccounts] = selectMinCompressedTokenAccountsForTransfer(compressedTokenAccounts, bn(maxAmount));
             const proof = await connection.getValidityProof(inputAccounts.map(account => bn(account.compressedAccount.hash)));
 
-            console.log(`buildTransferCompressedTokenTx 
-            payer, inputCompressedTokenAccounts, toAddress, amount, recentInputStateRootIndices, recentValidityProof
-            : ${payer}, ${inputAccounts}, ${recipient}, ${maxAmount}, ${proof.rootIndices}, ${proof.compressedProof}`)
-
-            const decompressIx = await CompressedTokenProgram.transfer({
+            const transferCompressedTokenTx = await CompressedTokenProgram.transfer({
                 payer: new PublicKey(payer),
                 inputCompressedTokenAccounts: inputAccounts,
                 toAddress: new PublicKey(recipient),
@@ -153,7 +150,7 @@ export const buildTransferCompressedTokenTx = async (payer: string, recipient: s
                 recentValidityProof: proof.compressedProof,
             });
 
-            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 }), decompressIx);
+            transaction.add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnitLimit }), transferCompressedTokenTx);
         }
 
         transaction.feePayer = new PublicKey(payer);
