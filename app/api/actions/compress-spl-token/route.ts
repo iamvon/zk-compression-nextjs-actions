@@ -94,10 +94,7 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
     ];
 }
 
-async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string): Promise<LinkedAction[]> {
-    // Find the token amount that can be decompressed
-    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(toDefaultPubkey), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
-
+async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string, maxCompressedAmount: number): Promise<LinkedAction[]> {
     const actions: LinkedAction[] = [];
 
     if (maxCompressedAmount > 0) {
@@ -261,7 +258,7 @@ export const POST = async (req: Request) => {
                                 disabled: false,
                                 description: 'Your USDC has been successfully compressed! Now you can decompress or transfer it.',
                                 links: {
-                                    actions: await getDecompressUSDCActionLinks(baseHref, account.toBase58())
+                                    actions: await getDecompressUSDCActionLinks(baseHref, account.toBase58(), amount)
                                 }
                             },
                         } as InlineNextActionLink,
