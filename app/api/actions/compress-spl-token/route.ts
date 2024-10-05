@@ -8,6 +8,7 @@ import {
 } from '@solana/actions';
 import { PublicKey } from '@solana/web3.js';
 import { getCompressedTokens, buildCompressSplTokenTx, buildDecompressSplTokenTx, buildTransferCompressedTokenTx } from '@/app/services/compression';
+import { ParsedTokenAccount } from '@lightprotocol/stateless.js';
 
 const SOLANA_MAINNET_USDC_PUBKEY = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOLANA_MAINNET_USDC_DECIMALS = 6;
@@ -124,16 +125,19 @@ async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: s
 }
 
 // Find the maximum compressed token amount
-async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey): Promise<number> {
+async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey, validTokenAccounts?: ParsedTokenAccount[]): Promise<number> {
     let maxCompressedAmount = 0;
 
     try {
-        // Fetch valid compressed USDC token accounts
-        const validTokenAccounts = await getValidCompressedTokenAccounts(account, mintAddress);
+        // Use provided validTokenAccounts if available, otherwise fetch them
+        if (!validTokenAccounts || validTokenAccounts.length === 0) {
+            // Fetch valid compressed USDC token accounts
+            validTokenAccounts = await getValidCompressedTokenAccounts(account, mintAddress);
+        }
 
         // Find the token amount that can be decompressed
-        for (const account of validTokenAccounts) {
-            const amount = account.parsed.amount.toNumber();
+        for (const tokenAccount of validTokenAccounts) {
+            const amount = tokenAccount.parsed.amount.toNumber();
             if (amount > maxCompressedAmount) {
                 maxCompressedAmount = amount;
             }
@@ -145,7 +149,6 @@ async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey
 
     return maxCompressedAmount;
 }
-
 
 // Fetch and filter valid compressed token accounts for any SPL token
 async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: PublicKey) {
@@ -278,15 +281,18 @@ export const POST = async (req: Request) => {
             // Fetch valid compressed USDC token accounts
             const validTokenAccounts = await getValidCompressedTokenAccounts(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
 
+            // Find the token amount that can be decompressed
+            const maxCompressedAmount = await getMaxCompressedAmount(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY), validTokenAccounts);
+
             // Build the Decompress USDC transaction
-            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, validTokenAccounts);
+            const transaction = await buildDecompressSplTokenTx(account.toBase58(), SOLANA_MAINNET_USDC_PUBKEY, validTokenAccounts, maxCompressedAmount);
 
             // Prepare the next action to decompress the Spl tokens
             const payload = await createPostResponse({
                 fields: {
                     type: 'transaction',
                     transaction,
-                    message: `Decompressed ${amount} USDC to ${account.toBase58()}`,
+                    message: `Decompressed ${maxCompressedAmount} USDC to ${account.toBase58()}`,
                     links: {
                         next: {
                             type: 'inline', // Inline action chaining

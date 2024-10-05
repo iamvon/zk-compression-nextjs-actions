@@ -70,18 +70,10 @@ export const buildCompressSplTokenTx = async (payer: string, amount: number, min
 };
 
 // Build transaction to decompress SPL tokens
-export const buildDecompressSplTokenTx = async (payer: string, mintAddress: string, compressedTokenAccounts: ParsedTokenAccount[]): Promise<Transaction> => {
+export const buildDecompressSplTokenTx = async (payer: string, mintAddress: string, compressedTokenAccounts: ParsedTokenAccount[], maxAmount: number): Promise<Transaction> => {
     try {
         const { blockhash } = await connection.getLatestBlockhash();
         const transaction = new Transaction();
-        let maxAmount: number = 0;
-
-        for (const account of compressedTokenAccounts) {
-            const amount = account.parsed.amount.toNumber();
-            if (amount > maxAmount) {
-                maxAmount = amount;
-            }
-        }
 
         if (maxAmount > 0) {
             // Calculate ATA
