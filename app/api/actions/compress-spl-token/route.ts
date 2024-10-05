@@ -246,7 +246,7 @@ export const POST = async (req: Request) => {
                 fields: {
                     type: 'transaction',
                     transaction,
-                    message: `Compressed ${amount} USDC for ${toPubkey.toBase58()}`,
+                    message: `Compressed ${amount} USDC for ${account.toBase58()}`,
                     links: {
                         next: {
                             type: 'inline', // Inline action chaining
@@ -256,9 +256,9 @@ export const POST = async (req: Request) => {
                                 label: 'Done!',
                                 title: 'Decompress USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully compressed! You can now decompress it.',
+                                description: 'Your USDC has been successfully compressed! Now you can decompress or transfer it.',
                                 links: {
-                                    actions: await getDecompressUSDCActionLinks(baseHref, toPubkey.toBase58())
+                                    actions: await getDecompressUSDCActionLinks(baseHref, account.toBase58())
                                 }
                             },
                         } as InlineNextActionLink,
