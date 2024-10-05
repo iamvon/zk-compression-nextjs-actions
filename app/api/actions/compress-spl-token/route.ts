@@ -153,7 +153,7 @@ async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: 
     const compressedTokenAccounts = await getCompressedTokens(account.toBase58());
 
     // Filter to find compressed token accounts for the specified mint address
-    const tokenAccounts = compressedTokenAccounts.items.filter(token =>
+    const tokenAccounts = compressedTokenAccounts.filter(token =>
         token.parsed.mint.toBase58() === mintAddress.toBase58()
     );
 

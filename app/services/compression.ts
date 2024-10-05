@@ -12,7 +12,19 @@ export const getCompressedTokens = async (owner: string) => {
     try {
         console.log("Using RPC URL:", rpcUrl);
         const accounts = await connection.getCompressedTokenAccountsByOwner(new PublicKey(owner));
-        return accounts;
+
+        // Deduplicate tokens with the same mint address and add the amounts
+        const deduplicatedAccounts = accounts.items.reduce((acc, current) => {
+            const existingAccount = acc.find(item => item.parsed.mint.equals(current.parsed.mint));
+            if (existingAccount) {
+                existingAccount.parsed.amount = existingAccount.parsed.amount.add(current.parsed.amount);
+            } else {
+                acc.push(current);
+            }
+            return acc;
+        }, [] as typeof accounts.items);
+
+        return deduplicatedAccounts;
     } catch (error) {
         console.error("Error fetching compressed tokens:", error);
         throw new Error("Error fetching compressed tokens!");
