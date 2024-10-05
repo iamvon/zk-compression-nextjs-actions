@@ -17,7 +17,10 @@ const headers = createActionHeaders({
     actionVersion: '2.2.1',
 });
 
-function getUSDCActionLinks(baseHref: string): LinkedAction[] {
+async function getUSDCActionLinks(baseHref: string, account: string): Promise<LinkedAction[]> {
+    // Find the token amount can be decompressed
+    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(account), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY))
+    
     return [
         {
             type: 'transaction',
@@ -50,7 +53,7 @@ function getUSDCActionLinks(baseHref: string): LinkedAction[] {
         },
         {
             type: 'post',
-            label: 'Decompress USDC', // button text
+            label: `Decompress ${maxCompressedAmount} USDC`, // button text
             href: `${baseHref}&action=decompress`,
         },
     ];
@@ -90,17 +93,20 @@ function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
     ];
 }
 
-function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string, compressedAmount: number): LinkedAction[] {
+async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string): Promise<LinkedAction[]> {
+    // Find the token amount can be decompressed
+    const maxCompressedAmount = await getMaxCompressedAmount(new PublicKey(toDefaultPubkey), new PublicKey(SOLANA_MAINNET_USDC_PUBKEY))
+
     return [
         {
             type: 'post',
-            label: `Decompress ${compressedAmount} USDC`, // button text
+            label: `Decompress ${maxCompressedAmount} USDC`, // button text
             href: `${baseHref}?to=${toDefaultPubkey}&action=decompress`,
         },
         {
             type: 'transaction',
             href: `${baseHref}?to={toPubkey}&action=transfer`,
-            label: `Transfer ${compressedAmount} compressed USDC`, // button text
+            label: `Transfer ${maxCompressedAmount} compressed USDC`, // button text
             parameters: [
                 {
                     name: 'toPubkey', // field name
@@ -110,6 +116,24 @@ function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: string,
         },
     ];
 }
+
+// Find the maximum compressed token amount
+async function getMaxCompressedAmount(account: PublicKey, mintAddress: PublicKey): Promise<number> {
+    // Fetch valid compressed USDC token accounts
+    const validTokenAccounts = await getValidCompressedTokenAccounts(account, mintAddress);
+    account
+    // Find the token amount that can be decompressed
+    let maxCompressedAmount = 0;
+    for (const account of validTokenAccounts) {
+        const amount = account.parsed.amount.toNumber();
+        if (amount > maxCompressedAmount) {
+            maxCompressedAmount = amount;
+        }
+    }
+
+    return maxCompressedAmount;
+}
+
 
 // Fetch and filter valid compressed token accounts for any SPL token
 async function getValidCompressedTokenAccounts(account: PublicKey, mintAddress: PublicKey) {
@@ -162,7 +186,7 @@ export const GET = async (req: Request) => {
             description: 'Compress or Decompress your USDC tokens in a blink! 👀',
             label: 'Compress or Decompress USDC',
             links: {
-                actions: getUSDCActionLinks(baseHref)
+                actions: await getUSDCActionLinks(baseHref, toPubkey.toBase58())
             },
         };
 
@@ -223,7 +247,7 @@ export const POST = async (req: Request) => {
                                 disabled: false,
                                 description: 'Your USDC has been successfully compressed! You can now decompress it.',
                                 links: {
-                                    actions: getDecompressUSDCActionLinks(baseHref, toPubkey.toBase58(), amount)
+                                    actions: await getDecompressUSDCActionLinks(baseHref, toPubkey.toBase58())
                                 }
                             },
                         } as InlineNextActionLink,
