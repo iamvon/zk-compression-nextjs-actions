@@ -107,7 +107,7 @@ async function getDecompressUSDCActionLinks(baseHref: string, toDefaultPubkey: s
             {
                 type: 'transaction',
                 href: `${baseHref}?to={toPubkey}&action=transfer`,
-                label: `Transfer ${maxCompressedAmount} compressed USDC`, // button text
+                label: `Send ${maxCompressedAmount} compressed USDC`, // button text
                 parameters: [
                     {
                         name: 'toPubkey', // field name
@@ -251,7 +251,7 @@ export const POST = async (req: Request) => {
                                 label: 'Done!',
                                 title: 'Decompress USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully compressed! Now you can decompress or transfer it.',
+                                description: 'Your USDC has been successfully compressed! Now you can decompress or send it.',
                                 links: {
                                     actions: await getDecompressUSDCActionLinks(baseHref, account.toBase58(), amount)
                                 }
