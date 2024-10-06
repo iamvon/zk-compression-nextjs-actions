@@ -189,7 +189,7 @@ export const GET = async (req: Request) => {
             type: 'action',
             title: 'USDC ZK Compression',
             icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-            description: 'Compress, decompress & send your USDC tokens in a blink! 👀',
+            description: 'Compress, decompress & send your USDC in a blink! 👀',
             label: 'Compress & Decompress USDC',
             links: {
                 actions: await getUSDCActionLinks(baseHref)
