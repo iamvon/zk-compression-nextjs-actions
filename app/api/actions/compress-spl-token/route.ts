@@ -265,11 +265,6 @@ export const POST = async (req: Request) => {
                 headers,
             });
         } else if (action === 'decompress') {
-            const baseHref = new URL(
-                `/api/actions/compress-spl-token`,
-                requestUrl.origin,
-            ).toString();
-
             // Fetch valid compressed USDC token accounts
             const validTokenAccounts = await getValidCompressedTokenAccounts(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
 
@@ -291,13 +286,10 @@ export const POST = async (req: Request) => {
                             action: {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-                                label: 'Done!',
-                                title: 'Compress USDC',
-                                disabled: false,
-                                description: 'Your USDC has been successfully decompressed! Now you can compress it.',
-                                links: {
-                                    actions: getCompressUSDCActionLinks(baseHref)
-                                }
+                                label: 'Completed!',
+                                title: 'Decompress USDC',
+                                disabled: true,
+                                description: 'Your USDC has been successfully decompressed!',
                             },
                             error: {
                                 message: `No compressed USDC found!`,
@@ -311,11 +303,6 @@ export const POST = async (req: Request) => {
                 headers,
             });
         } else if (action === 'transfer') {
-            const baseHref = new URL(
-                `/api/actions/compress-spl-token?to=${toPubkey.toBase58()}`,
-                requestUrl.origin,
-            ).toString();
-
             // Fetch valid compressed USDC token accounts
             const validTokenAccounts = await getValidCompressedTokenAccounts(account, new PublicKey(SOLANA_MAINNET_USDC_PUBKEY));
             // Build the Transfer Compressed USDC transaction
@@ -333,13 +320,10 @@ export const POST = async (req: Request) => {
                             action: {
                                 type: 'action',
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-                                label: 'Done!',
-                                title: 'Compress USDC',
+                                label: 'Completed!',
+                                title: 'Send Compressed USDC',
                                 disabled: false,
-                                description: 'Your USDC has been successfully sent! Now you can continue compressing it.',
-                                links: {
-                                    actions: getCompressUSDCActionLinks(baseHref)
-                                }
+                                description: 'Your compressed USDC has been successfully sent!',
                             },
                         } as InlineNextActionLink,
                     },
