@@ -322,7 +322,7 @@ export const POST = async (req: Request) => {
                                 icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
                                 label: 'Completed!',
                                 title: 'Send Compressed USDC',
-                                disabled: false,
+                                disabled: true,
                                 description: 'Your compressed USDC has been successfully sent!',
                             },
                         } as InlineNextActionLink,
