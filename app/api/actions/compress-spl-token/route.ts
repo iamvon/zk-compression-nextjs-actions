@@ -57,6 +57,17 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
                 message: `No compressed USDC found!`,
             },
         } as LinkedAction,
+        {
+            type: 'transaction',
+            href: `${baseHref}?to={toPubkey}&action=transfer`,
+            label: `Send compressed USDC`, // button text
+            parameters: [
+                {
+                    name: 'toPubkey', // field name
+                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
+                },
+            ],
+        }
     ];
 }
 
@@ -187,10 +198,10 @@ export const GET = async (req: Request) => {
 
         const payload: ActionGetResponse = {
             type: 'action',
-            title: 'Compress or Decompress USDC',
+            title: 'USDC ZK Compression',
             icon: 'https://i.ibb.co/Gp235BN/zk-compression.jpg/880x864',
-            description: 'Compress or Decompress your USDC tokens in a blink! 👀',
-            label: 'Compress or Decompress USDC',
+            description: 'Compress, decompress & send your USDC tokens in a blink! 👀',
+            label: 'Compress & Decompress USDC',
             links: {
                 actions: await getUSDCActionLinks(baseHref)
             },
