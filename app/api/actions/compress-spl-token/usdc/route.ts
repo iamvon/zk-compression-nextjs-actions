@@ -181,7 +181,7 @@ export const GET = async (req: Request) => {
         const requestUrl = new URL(req.url);
 
         const baseHref = new URL(
-            `/api/actions/compress-spl-token`,
+            `/api/actions/compress-spl-token/usdc`,
             requestUrl.origin,
         ).toString();
 
@@ -229,7 +229,7 @@ export const POST = async (req: Request) => {
 
         if (action === 'compress') {
             const baseHref = new URL(
-                `/api/actions/compress-spl-token`,
+                `/api/actions/compress-spl-token/usdc`,
                 requestUrl.origin,
             ).toString();
 
