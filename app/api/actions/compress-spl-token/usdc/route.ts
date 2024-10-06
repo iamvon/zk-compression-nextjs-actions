@@ -20,24 +20,24 @@ const headers = createActionHeaders({
 
 async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
     return [
-        {
-            type: 'transaction',
-            label: 'Compress USDC',
-            href: `${baseHref}?action=compress&amount={amount}`,
-            parameters: [
-                {
-                    type: 'select',
-                    name: 'amount', // parameter name in the `href` above
-                    label: 'Amount of USDC to compress', // placeholder of the text input
-                    required: true,
-                    options: [
-                        { label: '0.0001', value: '0.0001' },
-                        { label: '0.001', value: '0.001' },
-                        { label: '0.1', value: '0.1' },
-                    ],
-                },
-            ],
-        },
+        // {
+        //     type: 'transaction',
+        //     label: 'Compress USDC',
+        //     href: `${baseHref}?action=compress&amount={amount}`,
+        //     parameters: [
+        //         {
+        //             type: 'select',
+        //             name: 'amount', // parameter name in the `href` above
+        //             label: 'Amount of USDC to compress', // placeholder of the text input
+        //             required: true,
+        //             options: [
+        //                 { label: '0.0001', value: '0.0001' },
+        //                 { label: '0.001', value: '0.001' },
+        //                 { label: '0.1', value: '0.1' },
+        //             ],
+        //         },
+        //     ],
+        // },
         {
             type: 'transaction',
             label: 'Compress', // button text
@@ -57,40 +57,17 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
                 message: `No compressed USDC found!`,
             },
         } as LinkedAction,
-    ];
-}
-
-function getCompressUSDCActionLinks(baseHref: string): LinkedAction[] {
-    return [
         {
             type: 'transaction',
-            label: 'Compress USDC',
-            href: `${baseHref}?action=compress&amount={amount}`,
+            href: `${baseHref}?to={toPubkey}&action=transfer`,
+            label: `Send compressed USDC`, // button text
             parameters: [
                 {
-                    type: 'select',
-                    name: 'amount', // parameter name in the `href` above
-                    label: 'Amount of USDC to compress', // placeholder of the text input
-                    required: true,
-                    options: [
-                        { label: '0.0001', value: '0.0001' },
-                        { label: '0.001', value: '0.001' },
-                        { label: '0.1', value: '0.1' },
-                    ],
+                    name: 'toPubkey', // field name
+                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
                 },
             ],
-        },
-        {
-            type: 'transaction',
-            label: 'Compress', // button text
-            href: `${baseHref}?action=compress&amount={amount}`,
-            parameters: [
-                {
-                    name: 'amount', // field name
-                    label: 'Enter a custom USDC amount', // text input placeholder
-                },
-            ],
-        },
+        }
     ];
 }
 
