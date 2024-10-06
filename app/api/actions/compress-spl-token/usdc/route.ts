@@ -64,7 +64,7 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
             parameters: [
                 {
                     name: 'toPubkey', // field name
-                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
+                    label: 'Enter wallet address to send compressed USDC', // text input placeholder
                 },
             ],
         }
