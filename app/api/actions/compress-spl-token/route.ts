@@ -57,17 +57,6 @@ async function getUSDCActionLinks(baseHref: string): Promise<LinkedAction[]> {
                 message: `No compressed USDC found!`,
             },
         } as LinkedAction,
-        {
-            type: 'transaction',
-            href: `${baseHref}?to={toPubkey}&action=transfer`,
-            label: `Send compressed USDC`, // button text
-            parameters: [
-                {
-                    name: 'toPubkey', // field name
-                    label: 'Enter the wallet address to send compressed USDC', // text input placeholder
-                },
-            ],
-        }
     ];
 }
 
