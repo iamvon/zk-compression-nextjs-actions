@@ -18,7 +18,7 @@ You can use this product directly through a Blink on X/Twitter or via Dialect’
 ## Acknowledgements
 Special thanks to the teams at Light Protocol, Helius, and Dialect for their support, infrastructure, documentation, and comprehensive libraries.
 
-Additional thanks to [Airship](https://github.com/helius-labs/airship) and [Solana ZK Compressed Token Wallet](https://github.com/gitteri/solana-zk-compression) projects for their open-source repositories shared with the community
+Additional thanks to [Airship](https://github.com/helius-labs/airship) and [Solana ZK Compressed Token Wallet](https://github.com/gitteri/solana-zk-compression) projects for their open-source repositories shared with the community.
 
 For more information or support, please open an issue on the GitHub repository.
 
